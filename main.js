@@ -281,7 +281,8 @@ class CalendarView extends ItemView {
     this.registerEvent(
       this.app.workspace.on('active-leaf-change', () => {
         this._syncActiveDate();
-        this.render();
+        // Defer to avoid race with click handler calling openFile
+        setTimeout(() => this.render(), 0);
       })
     );
   }
@@ -475,6 +476,8 @@ class CalendarView extends ItemView {
     if (file instanceof TFile) {
       this.app.workspace.getLeaf(false).openFile(file);
     }
+    // Defer render to avoid race with active-leaf-change triggered by openFile
+    setTimeout(() => this.render(), 0);
   }
 
   /* ----- Sync active date from the currently viewed leaf ----- */

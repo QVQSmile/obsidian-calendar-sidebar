@@ -470,7 +470,6 @@ class CalendarView extends ItemView {
   /* ----- Open daily note ----- */
   _openNote(dateStr) {
     this.activeDate = dateStr;
-    this.render();
     const path = `${this.plugin.settings.dailyFolder}/${dateStr}.md`;
     const file = this.app.vault.getAbstractFileByPath(path);
     if (file instanceof TFile) {

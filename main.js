@@ -3,15 +3,21 @@
  * Scans Calendar/Daily/ for notes with images, shows thumbnails in date cells.
  * Click a date to open that day's daily note.
  */
-const { Plugin, ItemView, TFolder, TFile, Notice } = require('obsidian');
+const { Plugin, ItemView, TFolder, TFile, Notice, PluginSettingTab, Setting } = require('obsidian');
 
 const VIEW_TYPE = 'calendar-sidebar-view';
 
 /* ============================================================
    Plugin Entry
    ============================================================ */
+const DEFAULT_SETTINGS = {
+  dailyFolder: 'Calendar/Daily',
+};
+
 class CalendarSidebarPlugin extends Plugin {
   async onload() {
+    await this.loadSettings();
+
     // Load styles (manually installed plugins don't auto-load styles.css)
     this._loadStyles();
 
@@ -25,8 +31,19 @@ class CalendarSidebarPlugin extends Plugin {
       callback: () => this.activateView(),
     });
 
+    // Settings tab
+    this.addSettingTab(new CalendarSidebarSettingsTab(this.app, this));
+
     // Auto-open on layout ready (after Obsidian starts)
     this.app.workspace.onLayoutReady(() => this.activateView());
+  }
+
+  async loadSettings() {
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+  }
+
+  async saveSettings() {
+    await this.saveData(this.settings);
   }
 
   _loadStyles() {
@@ -245,7 +262,8 @@ class CalendarView extends ItemView {
   _onFileChanged(file) {
     // Only care about Calendar/Daily/ .md files
     if (!(file instanceof TFile) || file.extension !== 'md') return;
-    if (!file.path.startsWith('Calendar/Daily/')) return;
+    const folderPrefix = this.plugin.settings.dailyFolder + '/';
+    if (!file.path.startsWith(folderPrefix)) return;
 
     clearTimeout(this._refreshTimer);
     this._refreshTimer = setTimeout(async () => {
@@ -286,7 +304,7 @@ class CalendarView extends ItemView {
     if (this.monthCache.has(key)) return;
     this.monthCache.set(key, new Map()); // placeholder
 
-    const folderPath = 'Calendar/Daily';
+    const folderPath = this.plugin.settings.dailyFolder;
     const folder = this.app.vault.getAbstractFileByPath(folderPath);
     if (!(folder instanceof TFolder)) return;
 
@@ -395,7 +413,7 @@ class CalendarView extends ItemView {
   /* ----- Resolve and set background image ----- */
   async _setBackground(bgEl, link, dateStr) {
     try {
-      const sourcePath = `Calendar/Daily/${dateStr}.md`;
+      const sourcePath = `${this.plugin.settings.dailyFolder}/${dateStr}.md`;
       const file = this.app.metadataCache.getFirstLinkpathDest(link, sourcePath);
       if (file instanceof TFile) {
         const url = this.app.vault.getResourcePath(file);
@@ -417,11 +435,42 @@ class CalendarView extends ItemView {
 
   /* ----- Open daily note ----- */
   _openNote(dateStr) {
-    const path = `Calendar/Daily/${dateStr}.md`;
+    const path = `${this.plugin.settings.dailyFolder}/${dateStr}.md`;
     const file = this.app.vault.getAbstractFileByPath(path);
     if (file instanceof TFile) {
       this.app.workspace.getLeaf(false).openFile(file);
     }
+  }
+}
+
+/* ============================================================
+   Settings Tab
+   ============================================================ */
+class CalendarSidebarSettingsTab extends PluginSettingTab {
+  constructor(app, plugin) {
+    super(app, plugin);
+    this.plugin = plugin;
+  }
+
+  display() {
+    const { containerEl } = this;
+    containerEl.empty();
+
+    containerEl.createEl('h2', { text: 'Calendar Sidebar Settings' });
+
+    new Setting(containerEl)
+      .setName('Daily notes folder')
+      .setDesc('Path to the folder containing your daily notes (relative to vault root). Notes should be named YYYY-MM-DD.md')
+      .addText((text) =>
+        text
+          .setPlaceholder('Calendar/Daily')
+          .setValue(this.plugin.settings.dailyFolder)
+          .onChange(async (value) => {
+            // Strip trailing slash
+            this.plugin.settings.dailyFolder = value.replace(/\/+$/, '');
+            await this.plugin.saveSettings();
+          })
+      );
   }
 }
 

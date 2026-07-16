@@ -17,10 +17,14 @@ DayOne 风格的月历面板，显示在 Obsidian 左侧侧边栏文件管理器
 | `main.js` | 核心代码（~450 行，零外部依赖） |
 | `Calendar Sidebar 插件设计方案.md` | 原始设计文档 |
 
+## 配置
+
+插件设置页可自定义日记文件夹路径（默认为 `Calendar/Daily`）。
+
 ## 要求
 
 - Obsidian v1.5.0+
-- 日记位于 `Calendar/Daily/YYYY-MM-DD.md`
+- 日记按 `YYYY-MM-DD.md` 命名
 - 图片通过 `![[image.jpg]]` 嵌入到日记中
 
 ## 构建

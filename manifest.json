@@ -1,0 +1,10 @@
+{
+  "id": "calendar-sidebar",
+  "name": "Calendar Sidebar",
+  "version": "1.0.0",
+  "minAppVersion": "1.5.0",
+  "description": "DayOne-style calendar panel in the left sidebar with image thumbnails",
+  "author": "Sisyphus",
+  "dir": ".obsidian/plugins/calendar-sidebar",
+  "isDesktopOnly": true
+}

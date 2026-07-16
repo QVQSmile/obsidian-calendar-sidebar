@@ -3,7 +3,7 @@
  * Scans Calendar/Daily/ for notes with images, shows thumbnails in date cells.
  * Click a date to open that day's daily note.
  */
-const { Plugin, ItemView, TFolder, TFile, Notice, PluginSettingTab, Setting } = require('obsidian');
+const { Plugin, ItemView, TFolder, TFile, Notice, PluginSettingTab, Setting, SuggestModal } = require('obsidian');
 
 const VIEW_TYPE = 'calendar-sidebar-view';
 
@@ -12,6 +12,7 @@ const VIEW_TYPE = 'calendar-sidebar-view';
    ============================================================ */
 const DEFAULT_SETTINGS = {
   dailyFolder: 'Calendar/Daily',
+  thumbnailFilter: 'all', // 'all' | 'date-prefixed'
 };
 
 class CalendarSidebarPlugin extends Plugin {
@@ -320,9 +321,14 @@ class CalendarView extends ItemView {
       if (!cache) continue;
 
       const embeds = cache.embeds || [];
-      const images = embeds
+      let images = embeds
         .map((e) => e.link)
         .filter((link) => link && IMAGE_EXTS.includes(link.split('.').pop()?.toLowerCase()));
+
+      // Apply thumbnail filter
+      if (this.plugin.settings.thumbnailFilter === 'date-prefixed') {
+        images = images.filter((link) => link.startsWith(dateStr));
+      }
 
       if (images.length > 0) {
         map.set(dateStr, images);
@@ -458,19 +464,75 @@ class CalendarSidebarSettingsTab extends PluginSettingTab {
 
     containerEl.createEl('h2', { text: 'Calendar Sidebar Settings' });
 
+    // --- Daily folder with search ---
     new Setting(containerEl)
       .setName('Daily notes folder')
       .setDesc('Path to the folder containing your daily notes (relative to vault root). Notes should be named YYYY-MM-DD.md')
-      .addText((text) =>
-        text
+      .addSearch((cb) => {
+        this.folderInput = cb;
+        cb.setValue(this.plugin.settings.dailyFolder)
           .setPlaceholder('Calendar/Daily')
-          .setValue(this.plugin.settings.dailyFolder)
           .onChange(async (value) => {
-            // Strip trailing slash
             this.plugin.settings.dailyFolder = value.replace(/\/+$/, '');
             await this.plugin.saveSettings();
+          });
+      })
+      .addExtraButton((btn) => {
+        btn.setIcon('folder-search')
+          .setTooltip('Browse folders')
+          .onClick(() => {
+            new FolderSuggestModal(this.app, (path) => {
+              this.plugin.settings.dailyFolder = path;
+              this.plugin.saveSettings();
+              this.folderInput.setValue(path);
+            }).open();
+          });
+      });
+
+    // --- Thumbnail filter ---
+    new Setting(containerEl)
+      .setName('Thumbnail filter')
+      .setDesc('Choose which embedded images to show as date thumbnails')
+      .addDropdown((dd) =>
+        dd
+          .addOption('all', 'All embedded images')
+          .addOption('date-prefixed', 'Only date-prefixed (YYYY-MM-DD_*)')
+          .setValue(this.plugin.settings.thumbnailFilter)
+          .onChange(async (value) => {
+            this.plugin.settings.thumbnailFilter = value;
+            await this.plugin.saveSettings();
+            // Refresh the calendar view if open
+            const leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE)[0];
+            if (leaf?.view?.refresh) leaf.view.refresh();
           })
       );
+  }
+}
+
+/* ============================================================
+   Folder Suggest Modal
+   ============================================================ */
+class FolderSuggestModal extends SuggestModal {
+  constructor(app, onSubmit) {
+    super(app);
+    this.onSubmit = onSubmit;
+  }
+
+  getSuggestions(query) {
+    const folders = this.app.vault.getAllLoadedFiles()
+      .filter((f) => f instanceof TFolder);
+    if (!query) return folders;
+    return folders.filter((f) =>
+      f.path.toLowerCase().includes(query.toLowerCase())
+    );
+  }
+
+  renderSuggestion(folder, el) {
+    el.createEl('span', { text: folder.path });
+  }
+
+  onChooseSuggestion(folder) {
+    this.onSubmit(folder.path);
   }
 }
 

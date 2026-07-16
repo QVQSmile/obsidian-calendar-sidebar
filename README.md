@@ -19,7 +19,12 @@ DayOne 风格的月历面板，显示在 Obsidian 左侧侧边栏文件管理器
 
 ## 配置
 
-插件设置页可自定义日记文件夹路径（默认为 `Calendar/Daily`）。
+在 Obsidian 设置 → 第三方插件 → Calendar Sidebar：
+
+| 设置项 | 说明 |
+|--------|------|
+| **Daily notes folder** | 日记文件夹路径，支持搜索+浏览选择 |
+| **Thumbnail filter** | `All embedded images` = 显示日记中所有嵌入图片（默认）；`Only date-prefixed` = 只显示文件名以 `YYYY-MM-DD_` 开头的图片（适合配合 Photo Journal 使用） |
 
 ## 要求
 

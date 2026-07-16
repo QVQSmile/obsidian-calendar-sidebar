@@ -3,7 +3,7 @@
  * Scans Calendar/Daily/ for notes with images, shows thumbnails in date cells.
  * Click a date to open that day's daily note.
  */
-const { Plugin, ItemView, TFolder, TFile, Notice, PluginSettingTab, Setting, SuggestModal } = require('obsidian');
+const { Plugin, ItemView, TFolder, TFile, Notice, Modal, PluginSettingTab, Setting, SuggestModal } = require('obsidian');
 
 const VIEW_TYPE = 'calendar-sidebar-view';
 
@@ -468,26 +468,61 @@ class CalendarView extends ItemView {
     this.buildMonthCache(this.displayMonth).then(() => this.render());
   }
 
-  /* ----- Open daily note ----- */
+  /* ----- Open (or create + open) daily note ----- */
   _openNote(dateStr) {
-    this.activeDate = dateStr;
     const path = `${this.plugin.settings.dailyFolder}/${dateStr}.md`;
     const file = this.app.vault.getAbstractFileByPath(path);
-    if (file instanceof TFile) {
-      // Find a leaf in the main content area — NOT our own sidebar leaf
+
+    const openFileInLeaf = (f) => {
       const mdLeaves = this.app.workspace.getLeavesOfType('markdown');
       const leaf = mdLeaves.length > 0
         ? mdLeaves[0]                     // reuse existing tab
         : this.app.workspace.getLeaf(true); // create new tab
-      leaf.openFile(file);
+      leaf.openFile(f).then(() => {
+        this._syncActiveDate(leaf);
+        this.render();
+      });
+    };
+
+    if (file instanceof TFile) {
+      openFileInLeaf(file);
+    } else {
+      // File doesn't exist — ask user to confirm creation
+      new CreateNoteModal(this.app, dateStr, () => {
+        this._createDailyNote(path, dateStr).then(openFileInLeaf);
+      }).open();
     }
-    // Defer render to avoid race with active-leaf-change triggered by openFile
-    setTimeout(() => this.render(), 0);
+  }
+
+  /* ----- Create daily note from template ----- */
+  async _createDailyNote(path, dateStr) {
+    // Check if daily notes plugin has a template configured
+    const dnPlugin = this.app.internalPlugins.getPluginById('daily-notes');
+    const templatePath = dnPlugin?.instance?.options?.template;
+
+    if (templatePath) {
+      const templateFile = this.app.vault.getAbstractFileByPath(templatePath + '.md');
+      if (templateFile instanceof TFile) {
+        // Try Templater first for proper template processing (e.g. tp.file.title)
+        const tp = this.app.plugins.getPlugin('templater-obsidian')?.templater;
+        if (tp && tp.create_new_note_from_template) {
+          await tp.create_new_note_from_template(templateFile, this.plugin.settings.dailyFolder, dateStr, false);
+          const created = this.app.vault.getAbstractFileByPath(path);
+          if (created instanceof TFile) return created;
+        }
+        // Fallback: read raw template and create with unresolved content
+        const content = await this.app.vault.read(templateFile);
+        return this.app.vault.create(path, content);
+      }
+    }
+
+    // No template — create empty file
+    return this.app.vault.create(path, '');
   }
 
   /* ----- Sync active date from the currently viewed leaf ----- */
-  _syncActiveDate() {
-    const leaf = this.app.workspace.activeLeaf;
+  _syncActiveDate(leaf) {
+    leaf = leaf || this.app.workspace.activeLeaf;
     if (!leaf) return;
     const file = leaf.view?.file;
     if (!(file instanceof TFile)) return;
@@ -584,6 +619,37 @@ class FolderSuggestModal extends SuggestModal {
 
   onChooseSuggestion(folder) {
     this.onSubmit(folder.path);
+  }
+}
+
+/* ============================================================
+   Create Note Confirm Modal
+   ============================================================ */
+class CreateNoteModal extends Modal {
+  constructor(app, dateStr, onConfirm) {
+    super(app);
+    this.dateStr = dateStr;
+    this.onConfirm = onConfirm;
+  }
+
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.createEl('h3', { text: 'Create Daily Note' });
+    contentEl.createEl('p', { text: `No daily note found for ${this.dateStr}. Create one?` });
+
+    const btnDiv = contentEl.createDiv({ cls: 'modal-button-container' });
+    btnDiv.createEl('button', { text: 'Cancel' })
+      .addEventListener('click', () => this.close());
+    const confirmBtn = btnDiv.createEl('button', { text: 'Create', cls: 'mod-cta' });
+    confirmBtn.addEventListener('click', () => {
+      this.onConfirm();
+      this.close();
+    });
+  }
+
+  onClose() {
+    const { contentEl } = this;
+    contentEl.empty();
   }
 }
 

@@ -3,7 +3,7 @@
   "name": "Calendar Sidebar",
   "version": "1.0.0",
   "minAppVersion": "1.5.0",
-  "description": "DayOne-style calendar panel in the left sidebar with image thumbnails",
+  "description": "DayOne-style monthly calendar in the left sidebar with image thumbnails, today/browsing-date highlight, and auto-create daily notes from template. / DayOne 风格月历面板，支持图片缩略图、日期高亮、一键创建日记。",
   "author": "Sisyphus",
   "dir": ".obsidian/plugins/calendar-sidebar",
   "isDesktopOnly": true

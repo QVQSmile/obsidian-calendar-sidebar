@@ -453,8 +453,8 @@ class CalendarSidebarPlugin extends Plugin {
   min-height: 0;
 }
 .cal-weather-icon {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   object-fit: contain;
   flex-shrink: 0;
 }
@@ -517,8 +517,8 @@ button.cal-weather-refresh:hover {
   position: absolute;
   top: 2px;
   right: 2px;
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   object-fit: contain;
   z-index: 3;
   pointer-events: none;
@@ -557,8 +557,8 @@ button.cal-weather-refresh:hover {
   transform: translateY(0);
 }
 .cal-note-overlay .cal-overlay-icon {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   object-fit: contain;
   flex-shrink: 0;
 }
@@ -979,9 +979,18 @@ class WeatherService {
     const ttlHours = s.weatherTtlHours || 2;
     const locationName = s.weatherLocationName || '';
 
+    // Helper to normalize icon field (migrate emoji → .svg filename)
+    const _normIcon = (entry) => {
+      if (entry && entry.icon && !entry.icon.endsWith('.svg') && entry.weatherCode != null) {
+        const wmo = _lookupWmo(entry.weatherCode);
+        entry.icon = wmo.icon;
+      }
+    };
+
     // 1. Check weatherCache in plugin data.json (new storage)
     const cacheEntry = this.plugin.weatherCache?.[dateStr];
     if (cacheEntry && cacheEntry.fetchedAt && !this._shouldFetch(cacheEntry, ttlHours)) {
+      _normIcon(cacheEntry);
       return cacheEntry;
     }
 
@@ -992,7 +1001,7 @@ class WeatherService {
       const cache = this.plugin.app.metadataCache.getFileCache(existingFile);
       const snap = cache?.frontmatter?._calendar_weather;
       if (snap && typeof snap === 'object' && !this._shouldFetch(snap, ttlHours)) {
-        // Migrate to new storage silently
+        _normIcon(snap);
         this.plugin.weatherCache = this.plugin.weatherCache || {};
         this.plugin.weatherCache[dateStr] = { ...snap };
         this.plugin._saveWeatherCache();
@@ -2580,7 +2589,13 @@ class CalendarView extends ItemView {
   _readCachedWeather(dateStr) {
     // Check new weatherCache first
     const entry = this.plugin.weatherCache?.[dateStr];
-    if (entry && typeof entry === 'object') return entry;
+    if (entry && typeof entry === 'object') {
+      // Normalize icon: migrate emoji → .svg filename
+      if (entry.icon && !entry.icon.endsWith('.svg') && entry.weatherCode != null) {
+        entry.icon = _lookupWmo(entry.weatherCode).icon;
+      }
+      return entry;
+    }
     // Fallback: legacy frontmatter
     const s = this.plugin.settings;
     const path = `${s.dailyFolder}/${dateStr}.md`;
@@ -3171,6 +3186,10 @@ class CalendarView extends ItemView {
     const wcEntry = this.plugin.weatherCache?.[dateStr];
     const cache = this.app.metadataCache.getFileCache(currentFile);
     let snap = (wcEntry && typeof wcEntry === 'object') ? wcEntry : (cache?.frontmatter?._calendar_weather || null);
+    // Normalize icon: migrate emoji → .svg filename
+    if (snap && snap.icon && !snap.icon.endsWith('.svg') && snap.weatherCode != null) {
+      snap.icon = _lookupWmo(snap.weatherCode).icon;
+    }
     const isStale = snap && typeof snap === 'object' ? this.weather._shouldFetch(snap, this.plugin.settings.weatherTtlHours || 2) : true;
 
     // If no valid snapshot, trigger a background fetch

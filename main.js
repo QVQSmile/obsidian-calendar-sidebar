@@ -1248,6 +1248,33 @@ class WeatherService {
     const cache = this.plugin.app.metadataCache.getFileCache(existingFile);
     return !!cache?.frontmatter?._calendar_weather;
   }
+
+  /** Bulk-fetch weather for a list of dates with 2s delay between requests. */
+  async bulkBackfill(dateStrs, onProgress) {
+    let done = 0;
+    const total = dateStrs.length;
+    for (const dateStr of dateStrs) {
+      // Skip if already cached and not stale
+      const entry = this.plugin.weatherCache?.[dateStr];
+      if (entry && entry.fetchedAt && !this._shouldFetch(entry, this.plugin.settings.weatherTtlHours || 2)) {
+        done++;
+        onProgress?.(done, total, dateStr, true);
+        continue;
+      }
+      try {
+        await this.forceRefresh(dateStr);
+      } catch (e) {
+        console.warn('[CalendarSidebar] Backfill failed for', dateStr, e.message);
+      }
+      done++;
+      onProgress?.(done, total, dateStr, false);
+      // Delay between requests to be nice to the free API
+      if (done < total) await new Promise(r => setTimeout(r, 2000));
+    }
+    // Persist all fetched data
+    this.plugin._saveWeatherCache();
+    return done;
+  }
 }
 
 /* ============================================================
@@ -1342,6 +1369,14 @@ const LOCALE = {
     s_otdTemplateDesc:  'Template string for custom excerpt mode',
     s_otdExcerptKey:     'Frontmatter field name',
     s_otdExcerptKeyDesc: 'Which frontmatter key to read (only used in frontmatter mode)',
+    // Weather backfill
+    s_backfill:          'Bulk backfill weather',
+    s_backfillDesc:      'Fetch historical weather for all past diary dates (may take several minutes)',
+    s_backfillBtn:       'Start backfill',
+    s_backfillStarted:   (n) => `Backfilling ${n} days...`,
+    s_backfillProgress:  (done, total) => `Backfill: ${done}/${total}`,
+    s_backfillDone:      (n) => `Backfill complete: ${n} days`,
+    s_backfillAllDone:   'All dates already have weather data',
   },
   zh: {
     now:      '现在',
@@ -1431,6 +1466,14 @@ const LOCALE = {
     s_otdTemplateDesc:  '自定义摘要的模板字符串',
     s_otdExcerptKey:     'Frontmatter 字段名',
     s_otdExcerptKeyDesc: '读取哪个 frontmatter 键（仅 frontmatter 模式下使用）',
+    // Weather backfill
+    s_backfill:          '回填历史天气',
+    s_backfillDesc:      '为所有已有日记但缺少天气数据的日期批量拉取天气（约需数分钟）',
+    s_backfillBtn:       '开始回填',
+    s_backfillStarted:   (n) => `开始回填 ${n} 天……`,
+    s_backfillProgress:  (done, total) => `回填中: ${done}/${total}`,
+    s_backfillDone:      (n) => `回填完成: ${n} 天`,
+    s_backfillAllDone:   '所有日期已有天气数据',
   },
 };
 
@@ -2773,10 +2816,12 @@ class CalendarView extends ItemView {
     const file = this.app.vault.getAbstractFileByPath(path);
 
     const openFileInLeaf = (f) => {
+      const activeLeaf = this.app.workspace.activeLeaf;
+      const isMarkdown = activeLeaf?.view?.getViewType?.() === 'markdown';
       const mdLeaves = this.app.workspace.getLeavesOfType('markdown');
-      const leaf = mdLeaves.length > 0
-        ? mdLeaves[0]                     // reuse existing tab
-        : this.app.workspace.getLeaf(true); // create new tab
+      const leaf = isMarkdown
+        ? activeLeaf                        // use active tab if it's a markdown view
+        : (mdLeaves.length > 0 ? mdLeaves[0] : this.app.workspace.getLeaf(true));
       leaf.openFile(f).then(() => {
         this._syncActiveDate(leaf);
         this.render();
@@ -3283,6 +3328,38 @@ class CalendarView extends ItemView {
       this.activeDate = newDate;
     }
   }
+
+  /* ----- Bulk weather backfill for all past dates ----- */
+  async startWeatherBackfill() {
+    const folderPath = this.plugin.settings.dailyFolder;
+    const folder = this.app.vault.getAbstractFileByPath(folderPath);
+    if (!(folder instanceof TFolder)) return;
+
+    const dateStrs = [];
+    for (const child of folder.children) {
+      if (!(child instanceof TFile) || child.extension !== 'md') continue;
+      const match = child.name.match(/^(\d{4})-(\d{2})-(\d{2})\.md$/);
+      if (!match) continue;
+      const ds = match[0].replace(/\.md$/, '');
+      // Skip dates that already have cached weather (new storage or legacy frontmatter)
+      if (!this.weather.hasCachedSnapshot(ds)) dateStrs.push(ds);
+    }
+
+    if (dateStrs.length === 0) {
+      new Notice(_l(this.plugin.settings.weatherLanguage, 's_backfillAllDone'));
+      return;
+    }
+
+    const lang = this.plugin.settings.weatherLanguage;
+    new Notice(_l(lang, 's_backfillStarted', dateStrs.length));
+    await this.weather.bulkBackfill(dateStrs, (done, total) => {
+      if (done % 5 === 0 || done === total) {
+        new Notice(_l(lang, 's_backfillProgress', done, total));
+      }
+    });
+    new Notice(_l(lang, 's_backfillDone', dateStrs.length));
+    this.render();
+  }
 }
 
 /* ============================================================
@@ -3472,6 +3549,18 @@ class CalendarSidebarSettingsTab extends PluginSettingTab {
               leaf.view.refresh();
             }
           })
+      );
+
+    // Backfill weather button
+    new Setting(containerEl)
+      .setName(_s('s_backfill'))
+      .setDesc(_s('s_backfillDesc'))
+      .addButton((btn) => btn
+        .setButtonText(_s('s_backfillBtn'))
+        .onClick(async () => {
+          const leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE)[0];
+          if (leaf?.view) leaf.view.startWeatherBackfill();
+        })
       );
 
     /* ======================

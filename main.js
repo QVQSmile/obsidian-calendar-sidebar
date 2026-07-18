@@ -2508,6 +2508,7 @@ class CalendarView extends ItemView {
         const snap = this._readCachedWeather(dateStr);
         if (snap) {
         const badge = cell.createDiv({ cls: 'cal-weather-badge' });
+        badge.textContent = '';
         const iconUrl = _iconUrl(snap.icon);
         if (iconUrl) badge.style.backgroundImage = `url(${iconUrl})`;
           badge.setAttribute('aria-label', `${snap.condition}, ${snap.temperature}${this._unitSymbol(snap.units)}`);
@@ -2676,7 +2677,7 @@ class CalendarView extends ItemView {
 
     if (this._weatherError) {
       card.addClass('cal-weather-error');
-      card.querySelector('.cal-weather-icon').setText('\u26A0\uFE0F'); // ⚠️
+      card.querySelector('.cal-weather-icon').textContent = '⚠️';
       card.querySelector('.cal-weather-temp').setText(_l(lang, 'unavailable'));
       card.querySelector('.cal-weather-detail').setText(_l(lang, 'checkSettings'));
       return;
@@ -2686,6 +2687,7 @@ class CalendarView extends ItemView {
     if (!snap) {
       const iconEl = card.querySelector('.cal-weather-icon');
       const iconUrl = _iconUrl('overcast.svg');
+      iconEl.textContent = '';
       iconEl.style.backgroundImage = iconUrl ? `url(${iconUrl})` : '';
       card.querySelector('.cal-weather-temp').setText('—');
       card.querySelector('.cal-weather-detail').setText(_l(lang, 'noData'));
@@ -2694,6 +2696,7 @@ class CalendarView extends ItemView {
 
     const iconEl = card.querySelector('.cal-weather-icon');
     const iconUrl = _iconUrl(snap.icon);
+    iconEl.textContent = '';
     iconEl.style.backgroundImage = iconUrl ? `url(${iconUrl})` : '';
     iconEl.setAttribute('aria-label', snap.condition);
     iconEl.title = snap.condition;
@@ -3274,6 +3277,7 @@ class CalendarView extends ItemView {
       const labelKey = snap.temperatureLabel === 'Now' ? 'now' : 'high';
       if (tempEl) tempEl.textContent = `${_l(lang, labelKey)} ${snap.temperature ?? '?'}${unitSym}`;
       if (iconEl) {
+        iconEl.textContent = '';
         const iconUrl = _iconUrl(snap.icon);
         iconEl.style.backgroundImage = iconUrl ? `url(${iconUrl})` : '';
         iconEl.title = snap.condition;

@@ -23,6 +23,9 @@ DayOne 风格的月历面板，显示在 Obsidian 左侧侧边栏文件管理器
 - **EXIF 信息** — 在日历格子和日记图片上查看拍摄信息
 - **HEIC/HEIF 支持** — 桌面端自动生成缩略图
 - **去年今日** — 查看往年同日的图片和摘要
+- **日记时间线** — 跨多个来源目录搜索、按日期/来源/心情/收藏筛选，并在相邻 Markdown leaf 打开
+- **可视化心情** — 五级感受刻度加可选情绪标签，默认保存到 vault 内 `Calendar/journal-metadata.json`
+- **回顾统计** — 心情趋势、分布、常用标签、连续记录和月度完成率
 
 ## 天气功能（可选）
 
@@ -40,6 +43,19 @@ DayOne 风格的月历面板，显示在 Obsidian 左侧侧边栏文件管理器
 天气快照保存在插件的 `data.json` 中，不会写入日记 frontmatter。为了兼容旧版本，插件仍会读取已有的 `_calendar_weather`，且仅在坐标和单位匹配时迁移。月历标题下方会显示紧凑的天气卡片，包含图标、温度、体感温度、湿度和位置。Open-Meteo 请求使用地点自动时区。使用 **"刷新当前日期天气"** 命令可强制更新。
 
 EXIF GPS 反向地理编码默认关闭。只有显式开启「解析 GPS 地点」后，坐标才会发送到 OpenStreetMap Nominatim 以显示地名。
+
+## 日记索引与外部导入
+
+日记正文仍然是 Markdown。设置中的 Journal sources 可配置多个来源目录，来源类型可以是 `daily`、`journal` 或 `external`，并可指定 `dateField`。索引按配置日期字段、`date`、`creationDate`、合法日期文件名的顺序识别日期；无法识别日期的文件只进入诊断列表，不使用修改时间猜测。
+
+Day One 或 Apple Journal 导入请先使用专业导入插件，再把输出目录加入 Journal sources：
+
+- [Day One Importer](https://github.com/MarcDonald/obsidian-day-one-importer)
+- [Obsidian Importer](https://github.com/obsidianmd/obsidian-importer)
+
+本插件不解析 Day One JSON/ZIP，也不重写导入文件，只在索引层兼容 `creationDate`、`date`、`uuid`、`starred`、`favorite`、`location`、`coordinates`、`latitude` 和 `longitude` 等字段。
+
+心情 JSON 是主数据源，默认不会改动 Markdown。只有打开 Mirror mood to frontmatter 后，保存心情才会显式写入 `mood` 和 `mood_labels`；frontmatter 中已有但尚未导入 JSON 的旧心情允许显示，需运行 Import Frontmatter Mood Metadata 命令后才会写入主存储。重命名会同步键，删除会进入可恢复孤立记录区，导出、备份恢复和完整性检查均可从命令面板执行。
 
 **限制**：超出预报窗口的历史日期可能无法返回数据（归档 API 支持为尽力而为）。
 
@@ -74,6 +90,10 @@ EXIF GPS 反向地理编码默认关闭。只有显式开启「解析 GPS 地点
 | **Temperature units** | 温度单位：摄氏度/华氏度 |
 | **Auto-fetch weather** | 打开日记时自动获取天气 |
 | **Cache TTL (hours)** | 缓存有效期（小时） |
+| **Journal sources** | 多来源目录 JSON 配置 |
+| **Mood metadata path** | vault 内心情 JSON 路径，默认 `Calendar/journal-metadata.json` |
+| **Mirror mood to frontmatter** | 默认关闭的 frontmatter 镜像 |
+| **Daily reminder** | 可关闭的本地记录提醒 |
 
 ## 与 Templater 配合
 

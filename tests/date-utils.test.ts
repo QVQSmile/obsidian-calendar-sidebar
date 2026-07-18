@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDate, matchesDatePrefixedImage, parseDiaryDate } from '../src/date-utils';
+import { formatDate, formatDateInTimeZone, matchesDatePrefixedImage, parseDateFromFilename, parseDateString, parseDiaryDate } from '../src/date-utils';
 
 describe('date utilities', () => {
   it('accepts valid diary dates and rejects impossible dates', () => {
@@ -15,5 +15,20 @@ describe('date utilities', () => {
   it('checks date prefixes against the image basename', () => {
     expect(matchesDatePrefixedImage('Assets/2026-07-18_photo.jpg', '2026-07-18')).toBe(true);
     expect(matchesDatePrefixedImage('Assets/other-2026-07-18.jpg', '2026-07-18')).toBe(false);
+    expect(matchesDatePrefixedImage('Assets/2026-07-180.jpg', '2026-07-18')).toBe(false);
+    expect(matchesDatePrefixedImage('Assets/2026-07-18photo.jpg', '2026-07-18')).toBe(false);
+  });
+
+  it('parses ISO dates and bounded date-prefixed filenames', () => {
+    expect(parseDateString('2026-07-18T21:30:00+08:00')).toBe('2026-07-18');
+    expect(parseDateFromFilename('2026-07-18 evening.md')).toBe('2026-07-18');
+    expect(parseDateFromFilename('2026-07-180.md')).toBeNull();
+  });
+
+  it('uses the configured timezone at a DST and UTC day boundary', () => {
+    const instant = new Date('2026-07-18T23:30:00.000Z');
+    expect(formatDateInTimeZone(instant, 'Asia/Shanghai')).toBe('2026-07-19');
+    expect(formatDateInTimeZone(instant, 'America/Los_Angeles')).toBe('2026-07-18');
+    expect(formatDateInTimeZone(new Date('2026-03-08T08:30:00.000Z'), 'America/Los_Angeles')).toBe('2026-03-08');
   });
 });

@@ -11,6 +11,7 @@ const settings = {
 describe('weather cache', () => {
   it('creates a stable key for the weather configuration', () => {
     expect(weatherConfigKey(settings)).toContain('39.9042');
+    expect(weatherConfigKey(settings)).toContain('open-meteo-v1');
     expect(weatherConfigKey({ ...settings, weatherUnits: 'imperial' })).not.toBe(weatherConfigKey(settings));
   });
 

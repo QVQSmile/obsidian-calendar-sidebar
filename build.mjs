@@ -7,7 +7,7 @@ await build({
   format: 'cjs',
   target: 'es2020',
   external: ['obsidian'],
-  outfile: 'dist/main.js',
-  sourcemap: true,
+  outfile: 'main.js',
+  sourcemap: false,
   legalComments: 'none',
 });

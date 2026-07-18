@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Added
+- Added a TypeScript journal index with multiple source directories and Day One/Apple Journal metadata aliases.
+- Added a journal timeline view with search, date, source, mood, and favorite filters.
+- Added a vault JSON mood store with atomic writes, backups, rename synchronization, orphan recovery, import/export, and integrity commands.
+- Added a two-step five-level mood picker, optional labels, calendar markers, streak statistics, monthly completion, and a local reminder.
+- Added explicit frontmatter mood import and opt-in frontmatter mirroring.
+
 ### Fixed
 - Prevented EXIF metadata from being interpreted as HTML in the shared tooltip.
 - Fixed stale On This Day results after daily-note edits.
@@ -14,6 +21,7 @@
 - Added serialized plugin-data writes and unload flushing for weather cache updates.
 - Added an opt-in setting for EXIF GPS reverse geocoding.
 - Added TypeScript core modules, Vitest tests, and an esbuild build facade.
+- The release artifact is now built from `src/` into the root `main.js`; the entry no longer imports the previous JavaScript runtime.
 
 ## 1.2.0 (2026-07-18)
 

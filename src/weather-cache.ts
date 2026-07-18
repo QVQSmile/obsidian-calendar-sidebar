@@ -1,5 +1,7 @@
 import type { WeatherSettings, WeatherSnapshot } from './types';
 
+export const WEATHER_API_VERSION = 'open-meteo-v1';
+
 export function weatherConfigKey(settings: WeatherSettings): string {
   const latitude = Number.parseFloat(String(settings.weatherLatitude));
   const longitude = Number.parseFloat(String(settings.weatherLongitude));
@@ -8,6 +10,7 @@ export function weatherConfigKey(settings: WeatherSettings): string {
     longitude: Number.isFinite(longitude) ? Number(longitude.toFixed(6)) : null,
     units: settings.weatherUnits === 'imperial' ? 'imperial' : 'metric',
     timezone: settings.weatherTimezone || 'auto',
+    apiVersion: WEATHER_API_VERSION,
   });
 }
 

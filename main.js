@@ -481,8 +481,8 @@ class CalendarSidebarPlugin extends Plugin {
   min-height: 0;
 }
 .cal-weather-icon {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
@@ -547,8 +547,8 @@ button.cal-weather-refresh:hover {
   position: absolute;
   top: 2px;
   right: 2px;
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   background-size: contain;
   background-repeat: no-repeat;
   z-index: 3;
@@ -588,8 +588,8 @@ button.cal-weather-refresh:hover {
   transform: translateY(0);
 }
 .cal-note-overlay .cal-overlay-icon {
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;

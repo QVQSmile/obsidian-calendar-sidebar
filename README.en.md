@@ -21,6 +21,23 @@ DayOne-style monthly calendar panel in the Obsidian left sidebar, above the file
 - **Configurable folder** — search-suggest for daily notes folder path
 - **Thumbnail filter** — all embedded images or only date-prefixed filenames
 
+## Weather (Optional)
+
+Enable weather data from [Open-Meteo](https://open-meteo.com/) (no API key needed) in settings:
+
+| Setting | Description |
+|---------|-------------|
+| **Enable weather** | Toggle weather card in sidebar |
+| **Latitude / Longitude** | Your coordinates for local weather |
+| **Location name** | Display label (optional) |
+| **Temperature units** | Celsius or Fahrenheit |
+| **Auto-fetch** | Fetch when opening a daily note |
+| **Cache TTL** | Hours before re-fetching |
+
+Weather snapshots are saved as hidden YAML frontmatter (`_calendar_weather`) in daily notes — never visible in the rendered note. A compact weather card appears below the month header showing icon, temperature, feels-like, humidity, and location. Cached dates show a small weather emoji badge on the calendar grid. Use the **"Refresh Weather for Active Date"** command to force-update.
+
+**Limitation**: Historical dates beyond the forecast window may return no data (archive API support is best-effort).
+
 ## Installation
 
 - **BRAT**: Add `Haoo-7/Obsidian-Calendar-Sidebar` to BRAT
@@ -31,7 +48,7 @@ DayOne-style monthly calendar panel in the Obsidian left sidebar, above the file
 | File | Description |
 |------|-------------|
 | `manifest.json` | Plugin metadata |
-| `main.js` | Core code (~610 lines, zero external dependencies) |
+| `main.js` | Core code (~870 lines, zero external dependencies) |
 | `Calendar Sidebar 插件设计方案.md` | Original design doc (Chinese) |
 
 ## Settings

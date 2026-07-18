@@ -21,6 +21,23 @@ DayOne 风格的月历面板，显示在 Obsidian 左侧侧边栏文件管理器
 - **可配置日记文件夹** — 支持搜索+浏览选择路径
 - **缩略图过滤** — 可选择仅显示文件名以 `YYYY-MM-DD_` 开头的图片
 
+## 天气功能（可选）
+
+在设置中启用来自 [Open-Meteo](https://open-meteo.com/) 的天气数据（无需 API Key）：
+
+| 设置项 | 说明 |
+|---------|------|
+| **启用天气** | 切换侧边栏天气卡片显示 |
+| **纬度 / 经度** | 用于获取本地天气的坐标 |
+| **位置名称** | 显示标签（可选） |
+| **温度单位** | 摄氏度或华氏度 |
+| **自动获取** | 打开日记时自动获取天气 |
+| **缓存时间** | 重新获取前的缓存小时数 |
+
+天气快照以隐藏的 YAML frontmatter（`_calendar_weather`）保存在日记中 — 渲染后不可见。月历标题下方会显示紧凑的天气卡片，包含图标、温度、体感温度、湿度和位置。已缓存日期的日历格子上会显示小型天气 emoji 徽章。使用 **"刷新当前日期天气"** 命令可强制更新。
+
+**限制**：超出预报窗口的历史日期可能无法返回数据（归档 API 支持为尽力而为）。
+
 ## 安装
 
 - **BRAT**：在 BRAT 中添加 `Haoo-7/Obsidian-Calendar-Sidebar`
@@ -31,7 +48,7 @@ DayOne 风格的月历面板，显示在 Obsidian 左侧侧边栏文件管理器
 | 文件 | 说明 |
 |------|------|
 | `manifest.json` | 插件元信息 |
-| `main.js` | 核心代码（~610 行，零外部依赖） |
+| `main.js` | 核心代码（~870 行，零外部依赖） |
 | `Calendar Sidebar 插件设计方案.md` | 原始设计文档 |
 
 ## 配置
@@ -42,6 +59,12 @@ DayOne 风格的月历面板，显示在 Obsidian 左侧侧边栏文件管理器
 |--------|------|
 | **Daily notes folder** | 日记文件夹路径，支持搜索+浏览选择 |
 | **Thumbnail filter** | `All embedded images` = 显示日记中所有嵌入图片（默认）；`Only date-prefixed` = 只显示文件名以 `YYYY-MM-DD_` 开头的图片（适合配合 Photo Journal 使用） |
+| **Enable weather** | 启用天气功能 |
+| **Latitude / Longitude** | 天气坐标（必填） |
+| **Location name** | 位置名称（可选） |
+| **Temperature units** | 温度单位：摄氏度/华氏度 |
+| **Auto-fetch weather** | 打开日记时自动获取天气 |
+| **Cache TTL (hours)** | 缓存有效期（小时） |
 
 ## 与 Templater 配合
 

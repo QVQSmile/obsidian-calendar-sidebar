@@ -3,19 +3,49 @@
 ## 1.2.0 (2026-07-18)
 
 ### Added
-- **On This Day (去年今日)**: Browse past years' diary entries from the same calendar date. Visual-driven modal with year cards showing photos and excerpts.
-- **Calendar cell markers**: Small accent dots on dates that have entries from previous years (toggleable in settings).
-- **Sidebar button**: Quick-access "On This Day" button below the weather card (toggleable in settings).
+- **On This Day (去年今日)**: Browse past years' diary entries on the same calendar date. Photo-wall grid with 2-column layout, click any card to open that day's note.
+- **Date navigation**: Left/right arrows for ±1 day, plus a native date picker in the modal header for jumping to any date.
+- **Excerpt system**: Four modes — auto-extract from note body, read from frontmatter field, custom template with variables (`{body}`, `{year}`, `{date}`, plus any frontmatter key), or disable entirely.
+- **Reverse geocoding**: GPS coordinates in EXIF tooltips now resolve to place names (e.g. "广州市 · 天河区") via free Nominatim API.
+- **Calendar cell markers**: Small accent dots on dates with past-year entries (toggleable, off by default).
+- **Sidebar button**: Quick-access "On This Day" button below the weather card (toggleable).
 - **Command palette**: `Open On This Day / 打开去年今日` command.
-- **Excerpt modes**: Three options — auto-extract from note body, read from frontmatter field, or disable entirely.
-- **OnThisDayProvider**: Efficient data layer that scans all diary files once to build a date index, with per-MM-DD caching and automatic invalidation on file changes.
+- **Bulk weather backfill**: One-click button in settings to fetch historical weather for all dates without cached data.
+- **OnThisDayProvider**: Efficient data layer with single-scan date index, per-MM-DD caching, automatic invalidation.
+
+### Changed
+- **Settings page overhaul**: Reorganized into 4 clear sections (📓 Diary / 🌤️ Weather / 📅 On This Day / ⚙️ Other) with conditional field visibility.
+- **Weather storage**: Moved from diary YAML (`_calendar_weather`) to plugin `data.json` — zero frontmatter pollution.
+- **OTD modal**: Redesigned from carousel pagination to 2-column photo wall — all years visible at once.
+- **Sidebar button**: Updated to `pointerdown` event for single-click responsiveness.
+
+### Fixed
+- **Multi-tab navigation**: Calendar clicks now open the diary in the active tab instead of always the first tab.
+- **Empty cache race condition**: Newly created diary files no longer blocked by stale empty cache.
+- **Text-only cards**: When excerpt mode is "none" and no image exists, card now shows only year badge instead of misleading empty text.
+
+---
 
 ### 新增
-- **去年今日**: 翻阅往年同一天的日记照片和摘要。毛玻璃弹窗，每年一张卡片，左右翻页浏览。
-- **日历格子标记**: 有往年记录的日期右下角显示小圆点标记（可在设置中关闭）。
-- **侧边栏按钮**: 天气卡片下方的一键「去年今日」按钮（可在设置中关闭）。
-- **命令面板**: `Open On This Day / 打开去年今日` 命令。
-- **摘要模式**: 三种选项——自动提取正文、读取 frontmatter 字段、不显示摘要。
+- **去年今日（On This Day）**：翻阅往年同一天的照片和日记摘要。2 列照片墙布局，点击卡片即可打开对应日记。
+- **日期导航**：← → 箭头按天翻页，点击日期弹出系统日历选择器，可跳到任意日期。
+- **摘要系统**：四种模式——自动提取正文、读取 frontmatter 字段、自定义模板（支持 `{body}` `{year}` `{date}` 及任意 frontmatter 键）、不显示。
+- **逆地理编码**：EXIF 浮窗中的 GPS 坐标自动解析为地名（如"广州市 · 天河区"），使用免费 Nominatim API。
+- **日历格子标记**：有往年记录的日期右下角显示小圆点（默认关闭，可在设置中开启）。
+- **侧边栏按钮**：天气卡片下方的一键「去年今日」按钮（可开关）。
+- **命令面板**：`Open On This Day / 打开去年今日` 命令。
+- **批量回填天气**：设置中一键拉取所有缺失历史日期的天气数据。
+
+### 变更
+- **设置页重构**：分为 4 个清晰区块（📓 日记 / 🌤️ 天气 / 📅 去年今日 / ⚙️ 其他），条件字段按模式显隐。
+- **天气数据存储**：从日记 YAML（`_calendar_weather`）迁移到插件 `data.json`，不再污染 frontmatter。
+- **去年今日弹窗**：从翻页轮播改为 2 列照片墙——所有年份一览无余。
+- **侧边栏按钮**：改用 `pointerdown` 事件，单击即可响应。
+
+### 修复
+- **多标签页导航**：日历点击现在会在当前活跃标签页打开日记，而不是总是第一个标签页。
+- **空缓存竞争条件**：新建日记文件不再被过期空缓存阻挡。
+- **纯文字卡片**：无摘要且无图片时，只显示年份标签，不再显示误导性的空文本。
 
 ## 1.1.0 (2026-07-18)
 

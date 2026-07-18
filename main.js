@@ -455,9 +455,7 @@ class CalendarSidebarPlugin extends Plugin {
 .cal-weather-icon {
   width: 32px;
   height: 32px;
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
+  object-fit: contain;
   flex-shrink: 0;
 }
 .cal-weather-info {
@@ -521,8 +519,7 @@ button.cal-weather-refresh:hover {
   right: 2px;
   width: 14px;
   height: 14px;
-  background-size: contain;
-  background-repeat: no-repeat;
+  object-fit: contain;
   z-index: 3;
   pointer-events: none;
 }
@@ -562,9 +559,7 @@ button.cal-weather-refresh:hover {
 .cal-note-overlay .cal-overlay-icon {
   width: 22px;
   height: 22px;
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
+  object-fit: contain;
   flex-shrink: 0;
 }
 .cal-note-overlay .cal-overlay-info {
@@ -2507,10 +2502,9 @@ class CalendarView extends ItemView {
       if (this.plugin.settings.weatherEnabled && this.weather.hasCachedSnapshot(dateStr)) {
         const snap = this._readCachedWeather(dateStr);
         if (snap) {
-        const badge = cell.createDiv({ cls: 'cal-weather-badge' });
-        badge.textContent = '';
-        const iconUrl = _iconUrl(snap.icon);
-        if (iconUrl) badge.style.backgroundImage = `url(${iconUrl})`;
+        const badge = cell.createEl('img', { cls: 'cal-weather-badge' });
+        badge.src = _iconUrl(snap.icon) || '';
+        badge.alt = snap.condition;
           badge.setAttribute('aria-label', `${snap.condition}, ${snap.temperature}${this._unitSymbol(snap.units)}`);
           badge.title = `${snap.condition} · ${snap.temperature}${this._unitSymbol(snap.units)}`;
         }
@@ -2637,8 +2631,10 @@ class CalendarView extends ItemView {
     card.setAttribute('aria-live', 'polite');
     this._weatherCardEl = card;
 
-    const iconEl = card.createDiv({ cls: 'cal-weather-icon' });
-    iconEl.setText(this._weatherLoading ? '\u231B\uFE0F' : '\uD83C\uDF26\uFE0F'); // ⏳ or 🌦️
+    const iconEl = card.createEl('img', { cls: 'cal-weather-icon' });
+    const loading = this._weatherLoading ? '\u231B\uFE0F' : '';
+    if (loading) iconEl.alt = loading;
+    else { iconEl.src = _iconUrl('overcast.svg'); iconEl.alt = 'weather'; }
 
     const infoEl = card.createDiv({ cls: 'cal-weather-info' });
     const tempEl = infoEl.createDiv({ cls: 'cal-weather-temp' });
@@ -2677,7 +2673,8 @@ class CalendarView extends ItemView {
 
     if (this._weatherError) {
       card.addClass('cal-weather-error');
-      card.querySelector('.cal-weather-icon').textContent = '⚠️';
+      const iconEl = card.querySelector('.cal-weather-icon');
+      if (iconEl) { iconEl.src = ''; iconEl.alt = '⚠️'; }
       card.querySelector('.cal-weather-temp').setText(_l(lang, 'unavailable'));
       card.querySelector('.cal-weather-detail').setText(_l(lang, 'checkSettings'));
       return;
@@ -2686,20 +2683,18 @@ class CalendarView extends ItemView {
     const snap = this._weatherSnapshot;
     if (!snap) {
       const iconEl = card.querySelector('.cal-weather-icon');
-      const iconUrl = _iconUrl('overcast.svg');
-      iconEl.textContent = '';
-      iconEl.style.backgroundImage = iconUrl ? `url(${iconUrl})` : '';
+      if (iconEl) iconEl.src = _iconUrl('overcast.svg');
       card.querySelector('.cal-weather-temp').setText('—');
       card.querySelector('.cal-weather-detail').setText(_l(lang, 'noData'));
       return;
     }
 
     const iconEl = card.querySelector('.cal-weather-icon');
-    const iconUrl = _iconUrl(snap.icon);
-    iconEl.textContent = '';
-    iconEl.style.backgroundImage = iconUrl ? `url(${iconUrl})` : '';
-    iconEl.setAttribute('aria-label', snap.condition);
-    iconEl.title = snap.condition;
+    if (iconEl) {
+      iconEl.src = _iconUrl(snap.icon) || '';
+      iconEl.alt = snap.condition;
+      iconEl.title = snap.condition;
+    }
 
     const tempEl = card.querySelector('.cal-weather-temp');
     const unitSym = this._unitSymbol(snap.units);
@@ -3208,7 +3203,7 @@ class CalendarView extends ItemView {
     });
 
     // Icon
-    const iconEl = overlay.createDiv({ cls: 'cal-overlay-icon' });
+    const iconEl = overlay.createEl('img', { cls: 'cal-overlay-icon' });
     iconEl.setText(snap.icon);
     iconEl.title = snap.condition;
 
@@ -3277,9 +3272,7 @@ class CalendarView extends ItemView {
       const labelKey = snap.temperatureLabel === 'Now' ? 'now' : 'high';
       if (tempEl) tempEl.textContent = `${_l(lang, labelKey)} ${snap.temperature ?? '?'}${unitSym}`;
       if (iconEl) {
-        iconEl.textContent = '';
-        const iconUrl = _iconUrl(snap.icon);
-        iconEl.style.backgroundImage = iconUrl ? `url(${iconUrl})` : '';
+        iconEl.src = _iconUrl(snap.icon) || '';
         iconEl.title = snap.condition;
       }
 
